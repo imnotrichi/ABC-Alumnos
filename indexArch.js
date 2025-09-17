@@ -161,7 +161,83 @@ function borrar(entidad, clase) {
 function cambiar(entidad, clase) {
     mostrarListado(entidad);
     rl.question(`Ingrese el ID del ${entidad} que desea cambiar: `, id => {
-        //instrucciones para modificar el elemento a la lista (recuerda guardar los cambios en el json)
+        if (clase === Alumno) {
+            const indice = alumnos.findIndex(i => i.id === parseInt(id));
+
+            if (indice === -1) {
+                console.log('Opción no válida.');
+                modificar(entidad, clase);
+            } else {
+                const alumno = alumnos[indice];
+
+                console.log(`Alumno seleccionado: ${alumno.nombre}, Carrera: ${alumno.carrera || 'Ninguna'}`);
+                rl.question('¿Desea modificar el (1) Nombre o (2) Carrera?: ', opcion => {
+                    if (opcion === '1') {
+                        rl.question('Ingrese el nuevo nombre: ', nuevoNombre => {
+                            alumno.nombre = nuevoNombre;
+                            console.log('Nombre actualizado correctamente!');
+                            guardarDatos();
+                            seleccionarAccionPrincipal();
+                        });
+                    } else if (opcion === '2') {
+                        mostrarListado('carreras');
+                        rl.question('Ingrese el ID de la nueva carrera: ', idCarrera => {
+                            const nuevaCarrera = carreras.find(c => c.id === parseInt(idCarrera));
+                            if (!nuevaCarrera) {
+                                console.log('Carrera no encontrada.');
+                                modificar(entidad, clase);
+                                return;
+                            }
+
+                            // Dar de baja de la carrera anterior
+                            if (alumno.carrera) {
+                                const carreraAnterior = carreras.find(c => c.nombre === alumno.carrera);
+                                if (carreraAnterior) {
+                                    carreraAnterior.alumnos = carreraAnterior.alumnos.filter(a => a.id !== alumno.id);
+                                }
+                            }
+
+                            // Asignar a la nueva carrera
+                            alumno.carrera = nuevaCarrera.nombre;
+                            nuevaCarrera.alumnos.push(alumno);
+
+                            console.log('Carrera cambiada correctamente!');
+                            guardarDatos();
+                            seleccionarAccionPrincipal();
+                        });
+                    } else {
+                        console.log('Opción no válida.');
+                        modificar(entidad, clase);
+                    }
+                });
+            }
+        } else if (clase === Carrera) {
+            const indice = carreras.findIndex(i => i.id === parseInt(id));
+
+            if (indice === -1) {
+                console.log('Opción no válida.');
+                modificar(entidad, clase);
+            } else {
+                const carrera = carreras[indice];
+                console.log(`Carrera seleccionada: ${carrera.nombre}`);
+                rl.question('Ingrese el nuevo nombre de la carrera: ', nuevoNombre => {
+                    // Actualizar nombre en la carrera
+                    const nombreAnterior = carrera.nombre;
+                    carrera.nombre = nuevoNombre;
+
+                    // Actualizar el nombre de la carrera en los alumnos inscritos
+                    alumnos.forEach(alumno => {
+                        if (alumno.carrera === nombreAnterior) {
+                            alumno.carrera = nuevoNombre;
+                        }
+                    });
+
+                    console.log('Carrera modificada correctamente!');
+                    guardarDatos();
+                    seleccionarAccionPrincipal();
+                });
+            }
+        }
     });
 }
 
@@ -265,4 +341,3 @@ function seleccionarAccionEntidad(entidad) {
 
 // Iniciar el programa
 seleccionarAccionPrincipal();
-
